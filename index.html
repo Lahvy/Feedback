@@ -221,22 +221,21 @@
     /************************************
      * 1) Firebase inicializace
      ************************************/
-    // ⬇⬇⬇ SEM VLOŽ PŘESNÝ firebaseConfig Z KONZOLY
-    // může to být z projektu "design-review-data" NEBO "feedback-97a74"
+    // Stejný styl jako v Design Review Planneru,
+    // jen s jiným projectId (tady použijeme design-review-data, aby to fungovalo stejně).
     const firebaseConfig = {
       apiKey: "TVŮJ_API_KEY",
-      authDomain: "feedback-97a74.firebaseapp.com",
-      projectId: "feedback-97a74",
-      storageBucket: "feedback-97a74.appspot.com",
+      authDomain: "design-review-data.firebaseapp.com",
+      projectId: "design-review-data",
+      storageBucket: "design-review-data.appspot.com",
       messagingSenderId: "TVŮJ_SENDER_ID",
       appId: "TVŮJ_APP_ID"
     };
-    // ⬆⬆⬆ Tohle nahraď skutečným objektem z Firebase (ne jen projectId)
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // název kolekce ve Firestore
+    // název kolekce ve Firestore – tady se budou ukládat feedbacky
     const FEEDBACK_COLLECTION = "Feedback";
 
     /************************************
@@ -268,12 +267,14 @@
     openBtn.onclick = openModal;
     cancelBtn.onclick = closeModal;
 
+    // zavření kliknutím mimo modal
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
         closeModal();
       }
     });
 
+    // Auto-open modal při ?new=1 v URL (příchod z QR)
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") === "1") {
       openModal();
