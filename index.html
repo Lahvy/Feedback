@@ -29,6 +29,14 @@
       text-align: center;
     }
 
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
     .fb-card {
       background: white;
       border-radius: 10px;
@@ -47,6 +55,19 @@
       color: #777;
       margin-top: 4px;
       margin-bottom: 6px;
+    }
+
+    .summary {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      font-size: 0.9rem;
+    }
+
+    .summary p {
+      margin: 4px 0;
     }
 
     .overlay {
@@ -147,6 +168,33 @@
       color: #b91c1c;
       display: block;
     }
+
+    .controls .btn {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border-radius: 999px;
+    }
+
+    .btn-outline {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #111827;
+    }
+
+    .btn-outline:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: #ffffff;
+      border: none;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
   </style>
 </head>
 <body>
@@ -159,7 +207,22 @@
 
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
 
+  <div class="controls">
+    <button class="btn btn-outline" id="toggleSummary">Souhrnné statistiky</button>
+    <button class="btn btn-outline" id="exportCsv">Export CSV</button>
+    <button class="btn btn-danger" id="resetData">Reset dat</button>
+  </div>
+
   <h2>Přijaté feedbacky</h2>
+
+  <!-- panel se souhrnnými průměry (schovaný, otevře se až na klik) -->
+  <div id="summaryPanel" class="summary" style="display:none;">
+    <p><strong>Souhrnné průměry (na základě <span id="summaryCount">0</span> odpovědí):</strong></p>
+    <p>Bylo to dnes pro vás přínosné: <span id="avgQ1">-</span> / 5</p>
+    <p>Naučili jste se dnes něco: <span id="avgQ2">-</span> / 5</p>
+    <p>Bavilo vás téma: <span id="avgQ3">-</span> / 5</p>
+  </div>
+
   <div id="feedbackList">
     <p>Načítám data z Firebase…</p>
   </div>
@@ -221,9 +284,6 @@
     /************************************
      * 1) Firebase inicializace
      ************************************/
-    // Projekt: Feedback (feedback-97a74)
-    // Project number = 663383536761 -> použijeme jako messagingSenderId
-    // Pokud bude něco zlobit, je potřeba doplnit skutečný apiKey a appId z Firebase konzole.
     const firebaseConfig = {
       apiKey: "TVŮJ_API_KEY",
       authDomain: "feedback-97a74.firebaseapp.com",
@@ -235,8 +295,6 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-    // Kolekce ve Firestore, kam se budou ukládat odpovědi
     const FEEDBACK_COLLECTION = "Feedback";
 
     /************************************
@@ -256,6 +314,17 @@
     const commentGeneralEl = document.getElementById("commentGeneral");
     const nameEl = document.getElementById("name");
 
+    const toggleSummaryBtn = document.getElementById('toggleSummary');
+    const exportCsvBtn = document.getElementById('exportCsv');
+    const resetDataBtn = document.getElementById('resetData');
+    const summaryPanel = document.getElementById('summaryPanel');
+    const summaryCountEl = document.getElementById('summaryCount');
+    const avgQ1El = document.getElementById('avgQ1');
+    const avgQ2El = document.getElementById('avgQ2');
+    const avgQ3El = document.getElementById('avgQ3');
+
+    let lastSnapshot = null;
+
     function openModal() {
       resetForm();
       overlay.style.display = 'flex';
@@ -268,7 +337,6 @@
     openBtn.onclick = openModal;
     cancelBtn.onclick = closeModal;
 
-    // zavření kliknutím mimo modal
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
         closeModal();
@@ -351,7 +419,118 @@
     };
 
     /************************************
-     * 4) Načítání a zobrazení feedbacků z Firestore
+     * 4) Souhrnné statistiky
+     ************************************/
+    function updateSummary(snapshot) {
+      let sum1 = 0;
+      let sum2 = 0;
+      let sum3 = 0;
+      let count = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (typeof data.q1 === "number" && typeof data.q2 === "number" && typeof data.q3 === "number") {
+          sum1 += data.q1;
+          sum2 += data.q2;
+          sum3 += data.q3;
+          count++;
+        }
+      });
+
+      summaryCountEl.textContent = String(count);
+
+      if (count === 0) {
+        avgQ1El.textContent = "-";
+        avgQ2El.textContent = "-";
+        avgQ3El.textContent = "-";
+        return;
+      }
+
+      avgQ1El.textContent = (sum1 / count).toFixed(1);
+      avgQ2El.textContent = (sum2 / count).toFixed(1);
+      avgQ3El.textContent = (sum3 / count).toFixed(1);
+    }
+
+    toggleSummaryBtn.onclick = () => {
+      const hidden = summaryPanel.style.display === "none" || summaryPanel.style.display === "";
+      summaryPanel.style.display = hidden ? "block" : "none";
+      toggleSummaryBtn.textContent = hidden ? "Skrýt souhrn" : "Souhrnné statistiky";
+    };
+
+    /************************************
+     * 5) Export do CSV
+     ************************************/
+    function safeCsvValue(value) {
+      if (value === null || value === undefined) return '""';
+      const s = String(value).replace(/"/g, '""').replace(/\r?\n/g, ' ');
+      return `"${s}"`;
+    }
+
+    exportCsvBtn.onclick = () => {
+      if (!lastSnapshot || lastSnapshot.empty) {
+        alert("Žádná data k exportu.");
+        return;
+      }
+
+      const rows = [];
+      rows.push(["timestamp", "name", "q1", "q2", "q3", "commentFocus", "commentGeneral"].join(";"));
+
+      lastSnapshot.forEach(doc => {
+        const data = doc.data();
+        let ts = "";
+        if (data.createdAt && data.createdAt.toDate) {
+          ts = data.createdAt.toDate().toISOString();
+        }
+        rows.push([
+          safeCsvValue(ts),
+          safeCsvValue(data.name && data.name.trim() !== "" ? data.name : "Anonymous"),
+          safeCsvValue(data.q1),
+          safeCsvValue(data.q2),
+          safeCsvValue(data.q3),
+          safeCsvValue(data.commentFocus),
+          safeCsvValue(data.commentGeneral)
+        ].join(";"));
+      });
+
+      const csvContent = rows.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(csvContent ? blob : new Blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "feedback_export.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    /************************************
+     * 6) Reset všech dat
+     ************************************/
+    resetDataBtn.onclick = async () => {
+      if (!lastSnapshot || lastSnapshot.empty) {
+        alert("Žádná data k vymazání.");
+        return;
+      }
+
+      const sure = confirm("Smažete všechna aktuální data.\nOpravdu to chcete udělat?");
+      if (!sure) return;
+
+      try {
+        const deletePromises = [];
+        lastSnapshot.forEach(doc => {
+          deletePromises.push(doc.ref.delete());
+        });
+        await Promise.all(deletePromises);
+        alert("Všechna data byla smazána.");
+      } catch (error) {
+        console.error("Error deleting all feedback:", error);
+        alert("Nepodařilo se smazat všechna data. Zkuste to prosím znovu.");
+      }
+    };
+
+    /************************************
+     * 7) Načítání a zobrazení feedbacků z Firestore
      ************************************/
     function renderFeedbackList(snapshot) {
       feedbackList.innerHTML = "";
@@ -391,12 +570,15 @@
       });
     }
 
-    // Realtime posluchač na kolekci Feedback
+    let lastSnapshot = null;
+
     db.collection(FEEDBACK_COLLECTION)
       .orderBy("createdAt", "desc")
       .onSnapshot(
         (snapshot) => {
+          lastSnapshot = snapshot;
           renderFeedbackList(snapshot);
+          updateSummary(snapshot);
         },
         (error) => {
           console.error("Error loading feedback:", error);
