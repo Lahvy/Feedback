@@ -129,6 +129,11 @@
       font-weight: 600;
       cursor: pointer;
       display: block;
+      text-align: center;
+    }
+
+    .open-modal-btn:hover {
+      background: #15803d;
     }
 
     .status {
@@ -158,6 +163,8 @@
   </div>
 
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
+  <!-- nové tlačítko na reset dat -->
+  <button class="open-modal-btn" id="resetData">Reset dat</button>
 
   <h2>Přijaté feedbacky</h2>
   <div id="feedbackList">
@@ -222,8 +229,6 @@
      * 1) Firebase inicializace
      ************************************/
     // Projekt: Feedback (feedback-97a74)
-    // Project number = 663383536761 -> použijeme jako messagingSenderId
-    // Pokud bude něco zlobit, je potřeba doplnit skutečný apiKey a appId z Firebase konzole.
     const firebaseConfig = {
       apiKey: "TVŮJ_API_KEY",
       authDomain: "feedback-97a74.firebaseapp.com",
@@ -248,6 +253,7 @@
     const saveBtn = document.getElementById('save');
     const feedbackList = document.getElementById('feedbackList');
     const statusEl = document.getElementById('status');
+    const resetDataBtn = document.getElementById('resetData');
 
     const q1El = document.getElementById("q1");
     const q2El = document.getElementById("q2");
@@ -255,6 +261,8 @@
     const commentFocusEl = document.getElementById("commentFocus");
     const commentGeneralEl = document.getElementById("commentGeneral");
     const nameEl = document.getElementById("name");
+
+    let lastSnapshot = null;
 
     function openModal() {
       resetForm();
@@ -391,11 +399,11 @@
       });
     }
 
-    // Realtime posluchač na kolekci Feedback
     db.collection(FEEDBACK_COLLECTION)
       .orderBy("createdAt", "desc")
       .onSnapshot(
         (snapshot) => {
+          lastSnapshot = snapshot;
           renderFeedbackList(snapshot);
         },
         (error) => {
@@ -403,6 +411,31 @@
           feedbackList.innerHTML = "<p>Chyba při načítání z Firebase. Zkontroluj konfiguraci a Firestore rules.</p>";
         }
       );
+
+    /************************************
+     * 5) Reset všech dat
+     ************************************/
+    resetDataBtn.onclick = async () => {
+      if (!lastSnapshot || lastSnapshot.empty) {
+        alert("Žádná data k vymazání.");
+        return;
+      }
+
+      const sure = confirm("Smažete všechna aktuální data.\nOpravdu to chcete udělat?");
+      if (!sure) return;
+
+      try {
+        const deletePromises = [];
+        lastSnapshot.forEach(doc => {
+          deletePromises.push(doc.ref.delete());
+        });
+        await Promise.all(deletePromises);
+        alert("Všechna data byla smazána.");
+      } catch (error) {
+        console.error("Error deleting all feedback:", error);
+        alert("Nepodařilo se smazat všechna data. Zkuste to prosím znovu.");
+      }
+    };
   </script>
 
 </body>
