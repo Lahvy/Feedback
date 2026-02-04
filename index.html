@@ -22,9 +22,9 @@
       display: flex;
       justify-content: center;
       margin-bottom: 20px;
+      text-align: center;
     }
 
-    /* Feedback cards */
     .fb-card {
       background: white;
       border-radius: 10px;
@@ -33,7 +33,6 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
 
-    /* Modal overlay */
     .overlay {
       position: fixed;
       inset: 0;
@@ -45,7 +44,6 @@
       z-index: 1000;
     }
 
-    /* Modal */
     .modal {
       background: white;
       border-radius: 14px;
@@ -119,12 +117,8 @@
 
   <h1>Feedback Overview</h1>
 
-  <!-- QR code -->
   <div class="qr">
-    <img 
-      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://lahvy.github.io/Feedback/?new=1" 
-      alt="QR code" 
-    >
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://lahvy.github.io/Feedback/?new=1" alt="QR">
   </div>
 
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
@@ -139,7 +133,7 @@
 
       <label>Did you find it interesting today?</label>
       <select id="q1">
-        <option value="Please choose"/option>
+        <option value="" disabled selected>Choose...</option>
         <option value="5">★★★★★</option>
         <option value="4">★★★★☆</option>
         <option value="3">★★★☆☆</option>
@@ -149,7 +143,7 @@
 
       <label>Did you learn something new?</label>
       <select id="q2">
-        <option value="Please choose"/option>
+        <option value="" disabled selected>Choose...</option>
         <option value="5">★★★★★</option>
         <option value="4">★★★★☆</option>
         <option value="3">★★★☆☆</option>
@@ -159,7 +153,7 @@
 
       <label>Did you enjoy it?</label>
       <select id="q3">
-        <option value="Please choose"/option>
+        <option value="" disabled selected>Choose...</option>
         <option value="5">★★★★★</option>
         <option value="4">★★★★☆</option>
         <option value="3">★★★☆☆</option>
@@ -167,15 +161,12 @@
         <option value="1">★☆☆☆☆</option>
       </select>
 
-      <!-- INPUT 1 -->
       <label>Je něco, na co byste se chtěli příště zaměřit?</label>
       <textarea id="commentFocus" placeholder="Co by vás zajímalo příště?"></textarea>
 
-      <!-- INPUT 2 -->
       <label>Nějaký další komentář?</label>
       <textarea id="commentGeneral" placeholder="Další poznámka..."></textarea>
 
-      <!-- INPUT 3 -->
       <label>Jméno</label>
       <input id="name" placeholder="Vaše jméno (volitelné)">
 
@@ -196,7 +187,7 @@
     openBtn.onclick = () => overlay.style.display = 'flex';
     cancelBtn.onclick = () => overlay.style.display = 'none';
 
-    // AUTOSTART MODAL: pokud URL obsahuje ?new=1
+    // AUTOMATICKÉ OTEVŘENÍ MODALU PŘES QR KÓD
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") === "1") {
       overlay.style.display = "flex";
