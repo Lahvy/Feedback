@@ -42,6 +42,13 @@
       font-size: 1rem;
     }
 
+    .meta {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+
     .overlay {
       position: fixed;
       inset: 0;
@@ -140,12 +147,6 @@
       color: #b91c1c;
       display: block;
     }
-
-    .meta {
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 4px;
-    }
   </style>
 </head>
 <body>
@@ -159,7 +160,9 @@
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
 
   <h2>Přijaté feedbacky</h2>
-  <div id="feedbackList"><p>Načítám data z Firebase…</p></div>
+  <div id="feedbackList">
+    <p>Načítám data z Firebase…</p>
+  </div>
 
   <!-- MODAL -->
   <div class="overlay" id="overlay">
@@ -218,25 +221,26 @@
     /************************************
      * 1) Firebase inicializace
      ************************************/
-    // 🔧 TODO: Tady doplň svoje údaje z Firebase konzole
+    // ⬇⬇⬇ SEM VLOŽ PŘESNÝ firebaseConfig Z KONZOLY
+    // může to být z projektu "design-review-data" NEBO "feedback-97a74"
     const firebaseConfig = {
       apiKey: "TVŮJ_API_KEY",
-      authDomain: "TVŮJ_AUTH_DOMAIN",
-      projectId: "TVŮJ_PROJECT_ID",
-      storageBucket: "TVŮJ_STORAGE_BUCKET",
+      authDomain: "feedback-97a74.firebaseapp.com",
+      projectId: "feedback-97a74",
+      storageBucket: "feedback-97a74.appspot.com",
       messagingSenderId: "TVŮJ_SENDER_ID",
       appId: "TVŮJ_APP_ID"
     };
+    // ⬆⬆⬆ Tohle nahraď skutečným objektem z Firebase (ne jen projectId)
 
-    // Inicializace Firebase App + Firestore
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Název kolekce v databázi – můžeš kdykoliv přejmenovat
+    // název kolekce ve Firestore
     const FEEDBACK_COLLECTION = "Feedback";
 
     /************************************
-     * 2) DOM prvky a základní UI logika
+     * 2) DOM prvky a UI logika
      ************************************/
     const overlay = document.getElementById('overlay');
     const openBtn = document.getElementById('openFeedback');
@@ -252,7 +256,6 @@
     const commentGeneralEl = document.getElementById("commentGeneral");
     const nameEl = document.getElementById("name");
 
-    // otevřít / zavřít modal
     function openModal() {
       resetForm();
       overlay.style.display = 'flex';
@@ -265,14 +268,12 @@
     openBtn.onclick = openModal;
     cancelBtn.onclick = closeModal;
 
-    // zavření klikem mimo okno
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
         closeModal();
       }
     });
 
-    // Auto-open modal při ?new=1 v URL (přes QR)
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") === "1") {
       openModal();
@@ -305,7 +306,6 @@
       const commentGeneral = commentGeneralEl.value.trim();
       const name = nameEl.value.trim();
 
-      // Jednoduchá validace
       if (!q1 || !q2 || !q3) {
         statusEl.textContent = "Prosím vyberte odpověď u všech tří otázek.";
         statusEl.className = "status error";
@@ -338,7 +338,6 @@
           saveBtn.disabled = false;
           saveBtn.textContent = "Save";
         }, 800);
-
       } catch (error) {
         console.error("Error saving feedback:", error);
         statusEl.textContent = "Něco se nepovedlo, zkuste to prosím znovu.";
@@ -390,7 +389,6 @@
       });
     }
 
-    // Realtime listener – poslouchá změny v kolekci Feedback
     db.collection(FEEDBACK_COLLECTION)
       .orderBy("createdAt", "desc")
       .onSnapshot(
@@ -399,7 +397,7 @@
         },
         (error) => {
           console.error("Error loading feedback:", error);
-          feedbackList.innerHTML = "<p>Chyba při načítání z Firebase. Zkontroluj konfiguraci a Firestore pravidla.</p>";
+          feedbackList.innerHTML = "<p>Chyba při načítání z Firebase. Zkontroluj konfiguraci a Firestore rules.</p>";
         }
       );
   </script>
