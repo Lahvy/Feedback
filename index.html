@@ -45,7 +45,7 @@
       z-index: 1000;
     }
 
-    /* Modal - PERFECT RESPONSIVE FIX */
+    /* Modal */
     .modal {
       background: white;
       border-radius: 14px;
@@ -53,8 +53,8 @@
       max-width: 420px;
       padding: 24px;
       animation: fadeIn 0.2s ease;
-      max-height: 85vh;     /* modal nikdy nebude větší než okno */
-      overflow-y: auto;      /* skroluje se jen modal, ne celá stránka */
+      max-height: 85vh;
+      overflow-y: auto;
       box-sizing: border-box;
     }
 
@@ -100,10 +100,7 @@
     }
 
     .primary { background: #2563eb; color: white; }
-    .primary:hover { background: #1d4ed8; }
-
     .secondary { background: #eee; }
-    .secondary:hover { background: #ddd; }
 
     .open-modal-btn {
       margin: 20px auto;
@@ -116,19 +113,18 @@
       cursor: pointer;
       display: block;
     }
-
-    .open-modal-btn:hover {
-      background: #15803d;
-    }
   </style>
 </head>
 <body>
 
   <h1>Feedback Overview</h1>
 
-  <!-- QR – placeholder -->
+  <!-- QR code -->
   <div class="qr">
-    https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=YOUR_URL_HERE
+    <img 
+      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://lahvy.github.io/Feedback/?new=1" 
+      alt="QR code" 
+    >
   </div>
 
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
@@ -168,18 +164,17 @@
         <option value="1">★☆☆☆☆</option>
       </select>
 
-      <!-- 🔥 INPUT 1 -->
+      <!-- INPUT 1 -->
       <label>Je něco, na co byste se chtěli příště zaměřit?</label>
       <textarea id="commentFocus" placeholder="Co by vás zajímalo příště?"></textarea>
 
-      <!-- 🔥 INPUT 2 -->
+      <!-- INPUT 2 -->
       <label>Nějaký další komentář?</label>
       <textarea id="commentGeneral" placeholder="Další poznámka..."></textarea>
 
-      <!-- 🔥 INPUT 3 -->
+      <!-- INPUT 3 -->
       <label>Jméno</label>
       <input id="name" placeholder="Vaše jméno (volitelné)">
-      <div style="font-size: 0.8rem; color:#666;">Optional, you can send anonymously</div>
 
       <div class="btn-row">
         <button class="btn secondary" id="cancel">Cancel</button>
@@ -197,6 +192,12 @@
 
     openBtn.onclick = () => overlay.style.display = 'flex';
     cancelBtn.onclick = () => overlay.style.display = 'none';
+
+    // AUTOSTART MODAL: pokud URL obsahuje ?new=1
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1") {
+      overlay.style.display = "flex";
+    }
 
     let feedbacks = JSON.parse(localStorage.getItem("feedbacks") || "[]");
     renderFeedbacks();
@@ -217,7 +218,7 @@
           <div>Interesting: ${fb.q1}/5</div>
           <div>Learned: ${fb.q2}/5</div>
           <div>Enjoyed: ${fb.q3}/5</div>
-          <p><strong>Next time focus:</strong><br>${fb.commentFocus}</p>
+          <p><strong>Next time:</strong><br>${fb.commentFocus}</p>
           <p><strong>Comment:</strong><br>${fb.commentGeneral}</p>
         `;
         feedbackList.appendChild(div);
