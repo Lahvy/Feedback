@@ -1,223 +1,246 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <title>Lecture Feedback</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: system-ui, sans-serif;
-            background: #f5f5f7;
-            padding: 20px;
-            max-width: 720px;
-            margin: 0 auto;
-        }
+  <meta charset="UTF-8" />
+  <title>Lecture Feedback</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        h1 {
-            text-align: center;
-        }
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f7;
+      padding: 20px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
 
-        .qr {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    h1 {
+      text-align: center;
+    }
 
-        /* Feedback cards */
-        .fb-card {
-            background: white;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        }
+    .qr {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
 
-        /* Modal overlay */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+    /* Feedback cards */
+    .fb-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
 
-        /* Modal window */
-        .modal {
-            background: white;
-            border-radius: 14px;
-            width: 100%;
-            max-width: 420px;
-            padding: 24px;
-            animation: fadeIn 0.2s ease;
-        }
+    /* Modal overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 1000;
+    }
 
-        @keyframes fadeIn {
-            from {opacity: 0; transform: scale(0.95);}
-            to {opacity: 1; transform: scale(1);}
-        }
+    /* Modal - PERFECT RESPONSIVE FIX */
+    .modal {
+      background: white;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+      animation: fadeIn 0.2s ease;
+      max-height: 85vh;     /* modal nikdy nebude větší než okno */
+      overflow-y: auto;      /* skroluje se jen modal, ne celá stránka */
+      box-sizing: border-box;
+    }
 
-        label { font-weight: 600; display: block; margin-top: 16px; }
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
-        }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.95);}
+      to   {opacity: 1; transform: scale(1);}
+    }
 
-        textarea { resize: vertical; min-height: 80px; }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 16px;
+    }
 
-        .btn-row { display: flex; gap: 10px; margin-top: 20px; }
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-        }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
 
-        .primary { background: #2563eb; color: white; }
-        .secondary { background: #eee; }
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
 
-        .small {
-            margin-top: 4px;
-            font-size: 0.8rem;
-            color: #777;
-        }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
 
-        .open-modal-btn {
-            margin: 20px auto;
-            padding: 12px 20px;
-            border-radius: 999px;
-            border: none;
-            background: #16a34a;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            display: block;
-        }
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+    }
 
-    </style>
+    .primary { background: #2563eb; color: white; }
+    .primary:hover { background: #1d4ed8; }
+
+    .secondary { background: #eee; }
+    .secondary:hover { background: #ddd; }
+
+    .open-modal-btn {
+      margin: 20px auto;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: none;
+      background: #16a34a;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      display: block;
+    }
+
+    .open-modal-btn:hover {
+      background: #15803d;
+    }
+  </style>
 </head>
 <body>
 
-    <h1>Feedback Overview</h1>
+  <h1>Feedback Overview</h1>
 
-    <!-- QR – zatím placeholder, můžeš nahradit vlastním -->
-    <div class="qr">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=YOUR_URL_HERE" alt="QR code">
+  <!-- QR – placeholder -->
+  <div class="qr">
+    https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=YOUR_URL_HERE
+  </div>
+
+  <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
+
+  <h2>Přijaté feedbacky</h2>
+  <div id="feedbackList"></div>
+
+  <!-- MODAL -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>New Feedback</h2>
+
+      <label>Did you find it interesting today?</label>
+      <select id="q1">
+        <option value="5">★★★★★</option>
+        <option value="4">★★★★☆</option>
+        <option value="3">★★★☆☆</option>
+        <option value="2">★★☆☆☆</option>
+        <option value="1">★☆☆☆☆</option>
+      </select>
+
+      <label>Did you learn something new?</label>
+      <select id="q2">
+        <option value="5">★★★★★</option>
+        <option value="4">★★★★☆</option>
+        <option value="3">★★★☆☆</option>
+        <option value="2">★★☆☆☆</option>
+        <option value="1">★☆☆☆☆</option>
+      </select>
+
+      <label>Did you enjoy it?</label>
+      <select id="q3">
+        <option value="5">★★★★★</option>
+        <option value="4">★★★★☆</option>
+        <option value="3">★★★☆☆</option>
+        <option value="2">★★☆☆☆</option>
+        <option value="1">★☆☆☆☆</option>
+      </select>
+
+      <!-- 🔥 INPUT 1 -->
+      <label>Je něco, na co byste se chtěli příště zaměřit?</label>
+      <textarea id="commentFocus" placeholder="Co by vás zajímalo příště?"></textarea>
+
+      <!-- 🔥 INPUT 2 -->
+      <label>Nějaký další komentář?</label>
+      <textarea id="commentGeneral" placeholder="Další poznámka..."></textarea>
+
+      <!-- 🔥 INPUT 3 -->
+      <label>Jméno</label>
+      <input id="name" placeholder="Vaše jméno (volitelné)">
+      <div style="font-size: 0.8rem; color:#666;">Optional, you can send anonymously</div>
+
+      <div class="btn-row">
+        <button class="btn secondary" id="cancel">Cancel</button>
+        <button class="btn primary" id="save">Save</button>
+      </div>
     </div>
+  </div>
 
-    <!-- tlačítko pro otevření modalu -->
-    <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
+  <script>
+    const overlay = document.getElementById('overlay');
+    const openBtn = document.getElementById('openFeedback');
+    const cancelBtn = document.getElementById('cancel');
+    const saveBtn = document.getElementById('save');
+    const feedbackList = document.getElementById('feedbackList');
 
-    <h2>Přijaté feedbacky</h2>
-    <div id="feedbackList"></div>
+    openBtn.onclick = () => overlay.style.display = 'flex';
+    cancelBtn.onclick = () => overlay.style.display = 'none';
 
-    <!-- MODAL -->
-    <div class="overlay" id="overlay">
-        <div class="modal">
-            <h2>New Feedback</h2>
+    let feedbacks = JSON.parse(localStorage.getItem("feedbacks") || "[]");
+    renderFeedbacks();
 
-            <label>Did you find it interesting today?</label>
-            <select id="q1">
-                <option value="5">★★★★★</option>
-                <option value="4">★★★★☆</option>
-                <option value="3">★★★☆☆</option>
-                <option value="2">★★☆☆☆</option>
-                <option value="1">★☆☆☆☆</option>
-            </select>
+    function renderFeedbacks() {
+      feedbackList.innerHTML = "";
 
-            <label>Did you learn something new?</label>
-            <select id="q2">
-                <option value="5">★★★★★</option>
-                <option value="4">★★★★☆</option>
-                <option value="3">★★★☆☆</option>
-                <option value="2">★★☆☆☆</option>
-                <option value="1">★☆☆☆☆</option>
-            </select>
+      if (feedbacks.length === 0) {
+        feedbackList.innerHTML = "<p>Žádný feedback zatím nebyl přidán.</p>";
+        return;
+      }
 
-            <label>Did you enjoy it?</label>
-            <select id="q3">
-                <option value="5">★★★★★</option>
-                <option value="4">★★★★☆</option>
-                <option value="3">★★★☆☆</option>
-                <option value="2">★★☆☆☆</option>
-                <option value="1">★☆☆☆☆</option>
-            </select>
+      feedbacks.forEach(fb => {
+        const div = document.createElement("div");
+        div.className = "fb-card";
+        div.innerHTML = `
+          <strong>${fb.name || "Anonymous"}</strong><br>
+          <div>Interesting: ${fb.q1}/5</div>
+          <div>Learned: ${fb.q2}/5</div>
+          <div>Enjoyed: ${fb.q3}/5</div>
+          <p><strong>Next time focus:</strong><br>${fb.commentFocus}</p>
+          <p><strong>Comment:</strong><br>${fb.commentGeneral}</p>
+        `;
+        feedbackList.appendChild(div);
+      });
+    }
 
-            <label>What would you like to focus on next time?</label>
-            <textarea id="comment" placeholder="Your message..."></textarea>
+    saveBtn.onclick = () => {
+      const entry = {
+        q1: document.getElementById("q1").value,
+        q2: document.getElementById("q2").value,
+        q3: document.getElementById("q3").value,
+        commentFocus: document.getElementById("commentFocus").value,
+        commentGeneral: document.getElementById("commentGeneral").value,
+        name: document.getElementById("name").value
+      };
 
-            <label>Name</label>
-            <input id="name" placeholder="Your name">
-            <div class="small">Optional, you can send anonymously</div>
+      feedbacks.push(entry);
+      localStorage.setItem("feedbacks", JSON.stringify(feedbacks));
 
-            <div class="btn-row">
-                <button class="btn secondary" id="cancel">Cancel</button>
-                <button class="btn primary" id="save">Save</button>
-            </div>
-        </div>
-    </div>
+      overlay.style.display = "none";
+      renderFeedbacks();
+    };
+  </script>
 
-    <script>
-        const overlay = document.getElementById('overlay');
-        const openBtn = document.getElementById('openFeedback');
-        const cancelBtn = document.getElementById('cancel');
-        const saveBtn = document.getElementById('save');
-        const feedbackList = document.getElementById('feedbackList');
-
-        // Otevření modalu
-        openBtn.onclick = () => overlay.style.display = 'flex';
-        cancelBtn.onclick = () => overlay.style.display = 'none';
-
-        // Načtení uložených feedbacků
-        let feedbacks = JSON.parse(localStorage.getItem("feedbacks") || "[]");
-        renderFeedbacks();
-
-        function renderFeedbacks() {
-            feedbackList.innerHTML = "";
-
-            if (feedbacks.length === 0) {
-                feedbackList.innerHTML = "<p>Žádný feedback zatím nebyl přidán.</p>";
-                return;
-            }
-
-            feedbacks.forEach(fb => {
-                const div = document.createElement("div");
-                div.className = "fb-card";
-                div.innerHTML = `
-                    <strong>${fb.name || "Anonymous"}</strong><br>
-                    <div>Interesting: ${fb.q1}/5</div>
-                    <div>Learned: ${fb.q2}/5</div>
-                    <div>Enjoyed: ${fb.q3}/5</div>
-                    <p>${fb.comment}</p>
-                `;
-                feedbackList.appendChild(div);
-            });
-        }
-
-        // Uložení feedbacku
-        saveBtn.onclick = () => {
-            const entry = {
-                q1: document.getElementById("q1").value,
-                q2: document.getElementById("q2").value,
-                q3: document.getElementById("q3").value,
-                comment: document.getElementById("comment").value,
-                name: document.getElementById("name").value
-            };
-
-            feedbacks.push(entry);
-            localStorage.setItem("feedbacks", JSON.stringify(feedbacks));
-
-            overlay.style.display = "none";
-            renderFeedbacks();
-        };
-    </script>
 </body>
 </html>
