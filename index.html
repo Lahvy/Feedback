@@ -5,10 +5,6 @@
   <title>Lecture Feedback</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Firebase SDK (compat verze – ideální pro jeden soubor) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -35,18 +31,6 @@
       padding: 16px;
       margin-bottom: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      font-size: 0.95rem;
-    }
-
-    .fb-card strong {
-      font-size: 1rem;
-    }
-
-    .meta {
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 4px;
-      margin-bottom: 6px;
     }
 
     .overlay {
@@ -114,10 +98,7 @@
     }
 
     .primary { background: #2563eb; color: white; }
-    .primary:hover { background: #1d4ed8; }
-
     .secondary { background: #eee; }
-    .secondary:hover { background: #ddd; }
 
     .open-modal-btn {
       margin: 20px auto;
@@ -128,23 +109,6 @@
       color: white;
       font-weight: 600;
       cursor: pointer;
-      display: block;
-    }
-
-    .status {
-      margin-top: 8px;
-      font-size: 0.8rem;
-      text-align: center;
-      display: none;
-    }
-
-    .status.ok {
-      color: #16a34a;
-      display: block;
-    }
-
-    .status.error {
-      color: #b91c1c;
       display: block;
     }
   </style>
@@ -160,9 +124,7 @@
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
 
   <h2>Přijaté feedbacky</h2>
-  <div id="feedbackList">
-    <p>Načítám data z Firebase…</p>
-  </div>
+  <div id="feedbackList"></div>
 
   <!-- MODAL -->
   <div class="overlay" id="overlay">
@@ -212,195 +174,67 @@
         <button class="btn secondary" id="cancel">Cancel</button>
         <button class="btn primary" id="save">Save</button>
       </div>
-
-      <div class="status" id="status"></div>
     </div>
   </div>
 
   <script>
-    /************************************
-     * 1) Firebase inicializace
-     ************************************/
-    // Stejný styl jako v Design Review Planneru,
-    // jen s jiným projectId (tady použijeme design-review-data, aby to fungovalo stejně).
-    const firebaseConfig = {
-      apiKey: "TVŮJ_API_KEY",
-      authDomain: "design-review-data.firebaseapp.com",
-      projectId: "design-review-data",
-      storageBucket: "design-review-data.appspot.com",
-      messagingSenderId: "TVŮJ_SENDER_ID",
-      appId: "TVŮJ_APP_ID"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // název kolekce ve Firestore – tady se budou ukládat feedbacky
-    const FEEDBACK_COLLECTION = "Feedback";
-
-    /************************************
-     * 2) DOM prvky a UI logika
-     ************************************/
     const overlay = document.getElementById('overlay');
     const openBtn = document.getElementById('openFeedback');
     const cancelBtn = document.getElementById('cancel');
     const saveBtn = document.getElementById('save');
     const feedbackList = document.getElementById('feedbackList');
-    const statusEl = document.getElementById('status');
 
-    const q1El = document.getElementById("q1");
-    const q2El = document.getElementById("q2");
-    const q3El = document.getElementById("q3");
-    const commentFocusEl = document.getElementById("commentFocus");
-    const commentGeneralEl = document.getElementById("commentGeneral");
-    const nameEl = document.getElementById("name");
+    openBtn.onclick = () => overlay.style.display = 'flex';
+    cancelBtn.onclick = () => overlay.style.display = 'none';
 
-    function openModal() {
-      resetForm();
-      overlay.style.display = 'flex';
-    }
-
-    function closeModal() {
-      overlay.style.display = 'none';
-    }
-
-    openBtn.onclick = openModal;
-    cancelBtn.onclick = closeModal;
-
-    // zavření kliknutím mimo modal
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) {
-        closeModal();
-      }
-    });
-
-    // Auto-open modal při ?new=1 v URL (příchod z QR)
+    // AUTOMATICKÉ OTEVŘENÍ MODALU PŘES QR KÓD
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") === "1") {
-      openModal();
+      overlay.style.display = "flex";
     }
 
-    function resetForm() {
-      q1El.value = "";
-      q2El.value = "";
-      q3El.value = "";
-      commentFocusEl.value = "";
-      commentGeneralEl.value = "";
-      nameEl.value = "";
-      statusEl.style.display = "none";
-      statusEl.textContent = "";
-      statusEl.className = "status";
-    }
+    let feedbacks = JSON.parse(localStorage.getItem("feedbacks") || "[]");
+    renderFeedbacks();
 
-    /************************************
-     * 3) Uložení feedbacku do Firestore
-     ************************************/
-    saveBtn.onclick = async () => {
-      statusEl.style.display = "none";
-      statusEl.textContent = "";
-      statusEl.className = "status";
-
-      const q1 = q1El.value;
-      const q2 = q2El.value;
-      const q3 = q3El.value;
-      const commentFocus = commentFocusEl.value.trim();
-      const commentGeneral = commentGeneralEl.value.trim();
-      const name = nameEl.value.trim();
-
-      if (!q1 || !q2 || !q3) {
-        statusEl.textContent = "Prosím vyberte odpověď u všech tří otázek.";
-        statusEl.className = "status error";
-        statusEl.style.display = "block";
-        return;
-      }
-
-      const feedbackData = {
-        q1: Number(q1),
-        q2: Number(q2),
-        q3: Number(q3),
-        commentFocus,
-        commentGeneral,
-        name,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      try {
-        saveBtn.disabled = true;
-        saveBtn.textContent = "Saving...";
-
-        await db.collection(FEEDBACK_COLLECTION).add(feedbackData);
-
-        statusEl.textContent = "Díky za feedback! 🙏";
-        statusEl.className = "status ok";
-        statusEl.style.display = "block";
-
-        setTimeout(() => {
-          closeModal();
-          saveBtn.disabled = false;
-          saveBtn.textContent = "Save";
-        }, 800);
-      } catch (error) {
-        console.error("Error saving feedback:", error);
-        statusEl.textContent = "Něco se nepovedlo, zkuste to prosím znovu.";
-        statusEl.className = "status error";
-        statusEl.style.display = "block";
-        saveBtn.disabled = false;
-        saveBtn.textContent = "Save";
-      }
-    };
-
-    /************************************
-     * 4) Načítání a zobrazení feedbacků
-     ************************************/
-    function renderFeedbackList(snapshot) {
+    function renderFeedbacks() {
       feedbackList.innerHTML = "";
 
-      if (snapshot.empty) {
+      if (feedbacks.length === 0) {
         feedbackList.innerHTML = "<p>Žádný feedback zatím nebyl přidán.</p>";
         return;
       }
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
+      feedbacks.forEach(fb => {
         const div = document.createElement("div");
         div.className = "fb-card";
-
-        let dateText = "";
-        if (data.createdAt && data.createdAt.toDate) {
-          const d = data.createdAt.toDate();
-          dateText = d.toLocaleString("cs-CZ", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-          });
-        }
-
         div.innerHTML = `
-          <strong>${data.name && data.name.trim() !== "" ? data.name : "Anonymous"}</strong>
-          ${dateText ? `<div class="meta">${dateText}</div>` : ""}
-          <div>Interesting: ${data.q1 ?? "-"} / 5</div>
-          <div>Learned: ${data.q2 ?? "-"} / 5</div>
-          <div>Enjoyed: ${data.q3 ?? "-"} / 5</div>
-          ${data.commentFocus ? `<p><strong>Next time:</strong><br>${data.commentFocus}</p>` : ""}
-          ${data.commentGeneral ? `<p><strong>Comment:</strong><br>${data.commentGeneral}</p>` : ""}
+          <strong>${fb.name || "Anonymous"}</strong><br>
+          <div>Interesting: ${fb.q1}/5</div>
+          <div>Learned: ${fb.q2}/5</div>
+          <div>Enjoyed: ${fb.q3}/5</div>
+          <p><strong>Next time:</strong><br>${fb.commentFocus}</p>
+          <p><strong>Comment:</strong><br>${fb.commentGeneral}</p>
         `;
         feedbackList.appendChild(div);
       });
     }
 
-    db.collection(FEEDBACK_COLLECTION)
-      .orderBy("createdAt", "desc")
-      .onSnapshot(
-        (snapshot) => {
-          renderFeedbackList(snapshot);
-        },
-        (error) => {
-          console.error("Error loading feedback:", error);
-          feedbackList.innerHTML = "<p>Chyba při načítání z Firebase. Zkontroluj konfiguraci a Firestore rules.</p>";
-        }
-      );
+    saveBtn.onclick = () => {
+      const entry = {
+        q1: document.getElementById("q1").value,
+        q2: document.getElementById("q2").value,
+        q3: document.getElementById("q3").value,
+        commentFocus: document.getElementById("commentFocus").value,
+        commentGeneral: document.getElementById("commentGeneral").value,
+        name: document.getElementById("name").value
+      };
+
+      feedbacks.push(entry);
+      localStorage.setItem("feedbacks", JSON.stringify(feedbacks));
+
+      overlay.style.display = "none";
+      renderFeedbacks();
+    };
   </script>
 
 </body>
