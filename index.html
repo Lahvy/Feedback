@@ -119,6 +119,7 @@
     .secondary { background: #eee; }
     .secondary:hover { background: #ddd; }
 
+    /* Primární velké tlačítko – Nový feedback */
     .open-modal-btn {
       margin: 10px auto;
       padding: 12px 20px;
@@ -134,6 +135,25 @@
 
     .open-modal-btn:hover {
       background: #15803d;
+    }
+
+    /* Terciální tlačítka – Reset dat, Export CSV */
+    .tertiary-btn {
+      margin: 4px auto;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #111827;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: block;
+      text-align: center;
+    }
+
+    .tertiary-btn:hover {
+      background: #e5e7eb;
     }
 
     .status {
@@ -162,9 +182,11 @@
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://lahvy.github.io/Feedback/?new=1" alt="QR">
   </div>
 
+  <!-- Primární CTA -->
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
-  <button class="open-modal-btn" id="resetData">Reset dat</button>
-  <button class="open-modal-btn" id="exportCsv">Export CSV</button>
+  <!-- Terciální akce -->
+  <button class="tertiary-btn" id="resetData">Reset dat</button>
+  <button class="tertiary-btn" id="exportCsv">Export CSV</button>
 
   <h2>Přijaté feedbacky</h2>
   <div id="feedbackList">
