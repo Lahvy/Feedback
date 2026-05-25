@@ -188,13 +188,15 @@
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://lahvy.github.io/Feedback/?new=1" alt="QR">
   </div>
 
-<p style="text-align:center; margin-top:12px;">
-  Nemáte mobil?
-  <br>
-  <a href="https://lahvy.github.io/Feedback/?new=1">
-    Otevřít formulář pro feedback
-  </a>
+
+<button class="tertiary-btn" id="copyLinkBtn">
+  Zkopírovat odkaz na feedback
+</button>
+
+<p id="copyStatus" style="text-align:center;font-size:0.85rem;color:#16a34a;display:none;">
+  Odkaz zkopírován ✅
 </p>
+
   
   <!-- Primární CTA -->
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
@@ -329,6 +331,8 @@
     const statusEl = document.getElementById('status');
     const resetDataBtn = document.getElementById('resetData');
     const exportCsvBtn = document.getElementById('exportCsv');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+const copyStatus = document.getElementById('copyStatus');
 
     const q1El = document.getElementById("q1");
     const q2El = document.getElementById("q2");
@@ -433,6 +437,24 @@ if (urlParams.get("new") === "1") {
       }
     };
 
+    if (copyLinkBtn) {
+  copyLinkBtn.onclick = async () => {
+    const feedbackLink = "https://lahvy.github.io/Feedback/?new=1";
+
+    try {
+      await navigator.clipboard.writeText(feedbackLink);
+
+      copyStatus.style.display = "block";
+
+      setTimeout(() => {
+        copyStatus.style.display = "none";
+      }, 2000);
+
+    } catch (err) {
+      alert("Nepodařilo se zkopírovat odkaz. Zkuste to prosím ručně.");
+    }
+  };
+}
     /************************************
      * 4) Načítání a zobrazení feedbacků z Firestore
      ************************************/
