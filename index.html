@@ -172,6 +172,12 @@
       color: #b91c1c;
       display: block;
     }
+
+    
+.hidden { 
+  display: none !important; 
+}
+
   </style>
 </head>
 <body>
@@ -184,9 +190,12 @@
 
   <!-- Primární CTA -->
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
-  <!-- Terciální akce -->
+ 
+<!-- ADMIN ONLY -->
+<div id="adminOnly" class="hidden">
   <button class="tertiary-btn" id="resetData">Reset dat</button>
   <button class="tertiary-btn" id="exportCsv">Export CSV</button>
+</div>
 
   <h2>Přijaté feedbacky</h2>
   <div id="feedbackList">
@@ -238,8 +247,8 @@
       <input id="name" placeholder="Vaše jméno (volitelné)">
 
       <div class="btn-row">
-        <button class="btn secondary" id="cancel">Cancel</button>
-        <button class="btn primary" id="save">Save</button>
+        <button class="btn secondary" id="cancel">Zrušit</button>
+        <button class="btn primary" id="save">Uložit</button>
       </div>
 
       <div class="status" id="status"></div>
@@ -263,6 +272,44 @@
     const db = firebase.firestore();
     const FEEDBACK_COLLECTION = "Feedback";
 
+(function adminGate() {
+  const params = new URLSearchParams(window.location.search);
+
+  // bere Admin=1 / admin=1 / Admin=true apod.
+  const raw =
+    params.get("Admin") ??
+    params.get("admin") ??
+    "";
+
+  const isAdminFromUrl = ["1", "true", "yes", "y"].includes(raw.toLowerCase());
+
+  // volitelné: zapamatovat admin mód jen pro toto otevřené okno/záložku
+  if (isAdminFromUrl) {
+    sessionStorage.setItem("isAdmin", "1");
+  }
+
+  const isAdmin = sessionStorage.getItem("isAdmin") === "1";
+
+  // ukázat/schovat admin UI
+  const adminOnly = document.getElementById("adminOnly");
+  if (adminOnly) adminOnly.classList.toggle("hidden", !isAdmin);
+
+  // volitelné: uklidit Admin parametr z URL (aby se omylem nesdílel)
+  // (admin mód zůstane díky sessionStorage)
+  if (isAdminFromUrl) {
+    params.delete("Admin");
+    params.delete("admin");
+    const newQuery = params.toString();
+    const newUrl =
+      window.location.pathname +
+      (newQuery ? `?${newQuery}` : "") +
+      window.location.hash;
+
+    window.history.replaceState({}, "", newUrl);
+  }
+})();
+
+    
     /************************************
      * 2) DOM prvky a UI logika
      ************************************/
@@ -304,10 +351,10 @@
     });
 
     // Auto-otevření modalu, pokud URL obsahuje ?new=1 (příchod z QR)
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("new") === "1") {
-      openModal();
-    }
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get("new") === "1") {
+  openModal();
+}
 
     function resetForm() {
       q1El.value = "";
