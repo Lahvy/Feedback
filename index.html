@@ -5,13 +5,13 @@
   <title>Lecture Feedback</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Firebase SDK (compat verze – jednoduché propojení v jednom souboru) -->
+  <!-- Firebase SDK (compat verze) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
-  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -21,9 +21,7 @@
       margin: 0 auto;
     }
 
-    h1 {
-      text-align: center;
-    }
+    h1 { text-align: center; }
 
     .qr {
       display: flex;
@@ -41,9 +39,7 @@
       font-size: 0.95rem;
     }
 
-    .fb-card strong {
-      font-size: 1rem;
-    }
+    .fb-card strong { font-size: 1rem; }
 
     .meta {
       font-size: 0.8rem;
@@ -122,7 +118,6 @@
     .secondary { background: #eee; }
     .secondary:hover { background: #ddd; }
 
-    /* Primární velké tlačítko – Nový feedback */
     .open-modal-btn {
       margin: 10px auto;
       padding: 12px 20px;
@@ -136,11 +131,8 @@
       text-align: center;
     }
 
-    .open-modal-btn:hover {
-      background: #15803d;
-    }
+    .open-modal-btn:hover { background: #15803d; }
 
-    /* Terciální tlačítka – Reset dat, Export CSV */
     .tertiary-btn {
       margin: 4px auto;
       padding: 8px 16px;
@@ -155,9 +147,7 @@
       text-align: center;
     }
 
-    .tertiary-btn:hover {
-      background: #e5e7eb;
-    }
+    .tertiary-btn:hover { background: #e5e7eb; }
 
     .status {
       margin-top: 8px;
@@ -166,50 +156,37 @@
       display: none;
     }
 
-    .status.ok {
-      color: #16a34a;
-      display: block;
-    }
+    .status.ok { color: #16a34a; display: block; }
+    .status.error { color: #b91c1c; display: block; }
 
-    .status.error {
-      color: #b91c1c;
-      display: block;
-    }
-
-    
-.hidden { 
-  display: none !important; 
-}
-
+    .hidden { display: none !important; }
   </style>
 </head>
-<body>
 
+<body>
   <h1>Feedback Overview</h1>
 
   <div class="qr">
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://lahvy.github.io/Feedback/?new=1" alt="QR">
   </div>
 
+  <button class="tertiary-btn" id="copyLinkBtn" style="display:flex;align-items:center;gap:8px;justify-content:center;">
+    <i data-lucide="copy"></i>
+    Zkopírovat odkaz
+  </button>
 
-<button class="tertiary-btn" id="copyLinkBtn" style="display:flex;align-items:center;gap:8px;justify-content:center;">
-  <i data-lucide="copy"></i>
-  Zkopírovat odkaz
-</button>
+  <p id="copyStatus" style="text-align:center;font-size:0.85rem;color:#16a34a;display:none;">
+    Odkaz zkopírován ✅
+  </p>
 
-<p id="copyStatus" style="text-align:center;font-size:0.85rem;color:#16a34a;display:none;">
-  Odkaz zkopírován ✅
-</p>
-
-  
   <!-- Primární CTA -->
   <button class="open-modal-btn" id="openFeedback">Nový feedback</button>
- 
-<!-- ADMIN ONLY -->
-<div id="adminOnly" class="hidden">
-  <button class="tertiary-btn" id="resetData">Reset dat</button>
-  <button class="tertiary-btn" id="exportCsv">Export CSV</button>
-</div>
+
+  <!-- ADMIN ONLY -->
+  <div id="adminOnly" class="hidden">
+    <button class="tertiary-btn" id="resetData">Reset dat</button>
+    <button class="tertiary-btn" id="exportCsv">Export CSV</button>
+  </div>
 
   <h2>Přijaté feedbacky</h2>
   <div id="feedbackList">
@@ -231,27 +208,14 @@
         <option value="1">★☆☆☆☆</option>
       </select>
 
- <!--     <label>Naučili jste se dnes něco?</label>
-      <select id="q2">
-        <option value="" disabled selected>Choose...</option>
-        <option value="5">★★★★★</option>
-        <option value="4">★★★★☆</option>
-        <option value="3">★★★☆☆</option>
-        <option value="2">★★☆☆☆</option>
-        <option value="1">★☆☆☆☆</option>
-      </select>
+      <!--
+      <label>Naučili jste se dnes něco?</label>
+      <select id="q2">...</select>
       -->
 
-      
- <!--   <label>Bavilo vás téma?</label>
-      <select id="q3">
-        <option value="" disabled selected>Choose...</option>
-        <option value="5">★★★★★</option>
-        <option value="4">★★★★☆</option>
-        <option value="3">★★★☆☆</option>
-        <option value="2">★★☆☆☆</option>
-        <option value="1">★☆☆☆☆</option>
-      </select>
+      <!--
+      <label>Bavilo vás téma?</label>
+      <select id="q3">...</select>
       -->
 
       <label>Je něco, na co byste se chtěli příště zaměřit?</label>
@@ -289,44 +253,32 @@
     const db = firebase.firestore();
     const FEEDBACK_COLLECTION = "Feedback";
 
-(function adminGate() {
-  const params = new URLSearchParams(window.location.search);
+    (function adminGate() {
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get("Admin") ?? params.get("admin") ?? "";
+      const isAdminFromUrl = ["1", "true", "yes", "y"].includes(raw.toLowerCase());
 
-  // bere Admin=1 / admin=1 / Admin=true apod.
-  const raw =
-    params.get("Admin") ??
-    params.get("admin") ??
-    "";
+      if (isAdminFromUrl) {
+        sessionStorage.setItem("isAdmin", "1");
+      }
 
-  const isAdminFromUrl = ["1", "true", "yes", "y"].includes(raw.toLowerCase());
+      const isAdmin = sessionStorage.getItem("isAdmin") === "1";
+      const adminOnly = document.getElementById("adminOnly");
+      if (adminOnly) adminOnly.classList.toggle("hidden", !isAdmin);
 
-  // volitelné: zapamatovat admin mód jen pro toto otevřené okno/záložku
-  if (isAdminFromUrl) {
-    sessionStorage.setItem("isAdmin", "1");
-  }
+      if (isAdminFromUrl) {
+        params.delete("Admin");
+        params.delete("admin");
+        const newQuery = params.toString();
+        const newUrl =
+          window.location.pathname +
+          (newQuery ? `?${newQuery}` : "") +
+          window.location.hash;
 
-  const isAdmin = sessionStorage.getItem("isAdmin") === "1";
+        window.history.replaceState({}, "", newUrl);
+      }
+    })();
 
-  // ukázat/schovat admin UI
-  const adminOnly = document.getElementById("adminOnly");
-  if (adminOnly) adminOnly.classList.toggle("hidden", !isAdmin);
-
-  // volitelné: uklidit Admin parametr z URL (aby se omylem nesdílel)
-  // (admin mód zůstane díky sessionStorage)
-  if (isAdminFromUrl) {
-    params.delete("Admin");
-    params.delete("admin");
-    const newQuery = params.toString();
-    const newUrl =
-      window.location.pathname +
-      (newQuery ? `?${newQuery}` : "") +
-      window.location.hash;
-
-    window.history.replaceState({}, "", newUrl);
-  }
-})();
-
-    
     /************************************
      * 2) DOM prvky a UI logika
      ************************************/
@@ -339,16 +291,24 @@
     const resetDataBtn = document.getElementById('resetData');
     const exportCsvBtn = document.getElementById('exportCsv');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
-const copyStatus = document.getElementById('copyStatus');
+    const copyStatus = document.getElementById('copyStatus');
 
     const q1El = document.getElementById("q1");
-    const q2El = document.getElementById("q2");
-    const q3El = document.getElementById("q3");
     const commentFocusEl = document.getElementById("commentFocus");
     const commentGeneralEl = document.getElementById("commentGeneral");
     const nameEl = document.getElementById("name");
 
     let lastSnapshot = null;
+
+    function resetForm() {
+      q1El.value = "";
+      commentFocusEl.value = "";
+      commentGeneralEl.value = "";
+      nameEl.value = "";
+      statusEl.style.display = "none";
+      statusEl.textContent = "";
+      statusEl.className = "status";
+    }
 
     function openModal() {
       resetForm();
@@ -362,29 +322,14 @@ const copyStatus = document.getElementById('copyStatus');
     openBtn.onclick = openModal;
     cancelBtn.onclick = closeModal;
 
-    // zavření kliknutím mimo modal
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) {
-        closeModal();
-      }
+      if (e.target === overlay) closeModal();
     });
 
     // Auto-otevření modalu, pokud URL obsahuje ?new=1 (příchod z QR)
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get("new") === "1") {
-  openModal();
-}
-
-    function resetForm() {
-      q1El.value = "";
-      q2El.value = "";
-      q3El.value = "";
-      commentFocusEl.value = "";
-      commentGeneralEl.value = "";
-      nameEl.value = "";
-      statusEl.style.display = "none";
-      statusEl.textContent = "";
-      statusEl.className = "status";
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("new") === "1") {
+      openModal();
     }
 
     /************************************
@@ -396,14 +341,12 @@ if (urlParams.get("new") === "1") {
       statusEl.className = "status";
 
       const q1 = q1El.value;
-      const q2 = q2El.value;
-      const q3 = q3El.value;
       const commentFocus = commentFocusEl.value.trim();
       const commentGeneral = commentGeneralEl.value.trim();
       const name = nameEl.value.trim();
 
-      if (!q1 || !q2 || !q3) {
-        statusEl.textContent = "Prosím vyberte odpověď u všech tří otázek.";
+      if (!q1) {
+        statusEl.textContent = "Prosím vyberte odpověď.";
         statusEl.className = "status error";
         statusEl.style.display = "block";
         return;
@@ -411,8 +354,6 @@ if (urlParams.get("new") === "1") {
 
       const feedbackData = {
         q1: Number(q1),
-        q2: Number(q2),
-        q3: Number(q3),
         commentFocus,
         commentGeneral,
         name,
@@ -432,7 +373,7 @@ if (urlParams.get("new") === "1") {
         setTimeout(() => {
           closeModal();
           saveBtn.disabled = false;
-          saveBtn.textContent = "Save";
+          saveBtn.textContent = "Uložit";
         }, 800);
       } catch (error) {
         console.error("Error saving feedback:", error);
@@ -440,41 +381,42 @@ if (urlParams.get("new") === "1") {
         statusEl.className = "status error";
         statusEl.style.display = "block";
         saveBtn.disabled = false;
-        saveBtn.textContent = "Save";
+        saveBtn.textContent = "Uložit";
       }
     };
 
-if (copyLinkBtn) {
-  copyLinkBtn.onclick = async () => {
-    const feedbackLink = "https://lahvy.github.io/Feedback/?new=1";
-    const icon = copyLinkBtn.querySelector("i");
+    /************************************
+     * 3b) Kopírování odkazu + změna ikony
+     ************************************/
+    if (copyLinkBtn) {
+      copyLinkBtn.onclick = async () => {
+        const feedbackLink = "https://lahvy.github.io/Feedback/?new=1";
+        const icon = copyLinkBtn.querySelector("i");
 
-    try {
-      await navigator.clipboard.writeText(feedbackLink);
+        try {
+          await navigator.clipboard.writeText(feedbackLink);
 
-      // ✅ změna ikony: copy → check
-      if (icon) {
-        icon.setAttribute("data-lucide", "check");
-        lucide.createIcons();
-      }
+          if (icon) {
+            icon.setAttribute("data-lucide", "check");
+            lucide.createIcons();
+          }
 
-      copyStatus.style.display = "block";
+          copyStatus.style.display = "block";
 
-      // po 2s vrátíme ikonu zpět
-      setTimeout(() => {
-        copyStatus.style.display = "none";
+          setTimeout(() => {
+            copyStatus.style.display = "none";
+            if (icon) {
+              icon.setAttribute("data-lucide", "copy");
+              lucide.createIcons();
+            }
+          }, 2000);
 
-        if (icon) {
-          icon.setAttribute("data-lucide", "copy");
-          lucide.createIcons();
+        } catch (err) {
+          alert("Nepodařilo se zkopírovat odkaz. Zkuste to prosím ručně.");
         }
-      }, 2000);
-
-    } catch (err) {
-      alert("Nepodařilo se zkopírovat odkaz. Zkuste to prosím ručně.");
+      };
     }
-  };
-}
+
     /************************************
      * 4) Načítání a zobrazení feedbacků z Firestore
      ************************************/
@@ -495,22 +437,17 @@ if (copyLinkBtn) {
         if (data.createdAt && data.createdAt.toDate) {
           const d = data.createdAt.toDate();
           dateText = d.toLocaleString("cs-CZ", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
+            day: "2-digit", month: "2-digit", year: "numeric",
+            hour: "2-digit", minute: "2-digit"
           });
         }
 
         div.innerHTML = `
           <strong>${data.name && data.name.trim() !== "" ? data.name : "Anonymous"}</strong>
           ${dateText ? `<div class="meta">${dateText}</div>` : ""}
-          <div>Interesting: ${data.q1 ?? "-"} / 5</div>
-          <div>Learned: ${data.q2 ?? "-"} / 5</div>
-          <div>Enjoyed: ${data.q3 ?? "-"} / 5</div>
-          ${data.commentFocus ? `<p><strong>Next time:</strong><br>${data.commentFocus}</p>` : ""}
-          ${data.commentGeneral ? `<p><strong>Comment:</strong><br>${data.commentGeneral}</p>` : ""}
+          <div>Přínosné: ${data.q1 ?? "-"} / 5</div>
+          ${data.commentFocus ? `<p><strong>Příště:</strong><br>${data.commentFocus}</p>` : ""}
+          ${data.commentGeneral ? `<p><strong>Co zlepšit:</strong><br>${data.commentGeneral}</p>` : ""}
         `;
         feedbackList.appendChild(div);
       });
@@ -543,9 +480,7 @@ if (copyLinkBtn) {
 
       try {
         const deletePromises = [];
-        lastSnapshot.forEach(doc => {
-          deletePromises.push(doc.ref.delete());
-        });
+        lastSnapshot.forEach(doc => deletePromises.push(doc.ref.delete()));
         await Promise.all(deletePromises);
         alert("Všechna data byla smazána.");
       } catch (error) {
@@ -555,7 +490,7 @@ if (copyLinkBtn) {
     };
 
     /************************************
-     * 6) Export do CSV
+     * 6) Export do CSV (zjednodušený)
      ************************************/
     function safeCsvValue(value) {
       if (value === null || value === undefined) return '""';
@@ -570,7 +505,7 @@ if (copyLinkBtn) {
       }
 
       const rows = [];
-      rows.push(["timestamp", "name", "q1", "q2", "q3", "commentFocus", "commentGeneral"].join(";"));
+      rows.push(["timestamp", "name", "q1", "commentFocus", "commentGeneral"].join(";"));
 
       lastSnapshot.forEach(doc => {
         const data = doc.data();
@@ -582,8 +517,6 @@ if (copyLinkBtn) {
           safeCsvValue(ts),
           safeCsvValue(data.name && data.name.trim() !== "" ? data.name : "Anonymous"),
           safeCsvValue(data.q1),
-          safeCsvValue(data.q2),
-          safeCsvValue(data.q3),
           safeCsvValue(data.commentFocus),
           safeCsvValue(data.commentGeneral)
         ].join(";"));
@@ -601,9 +534,8 @@ if (copyLinkBtn) {
       URL.revokeObjectURL(url);
     };
 
-  lucide.createIcons();
-  
+    // Inicializace Lucide ikon (po načtení DOM)
+    lucide.createIcons();
   </script>
-
 </body>
 </html>
