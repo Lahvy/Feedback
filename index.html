@@ -9,6 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+  
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -189,7 +192,8 @@
   </div>
 
 
-<button class="tertiary-btn" id="copyLinkBtn">
+<button class="tertiary-btn" id="copyLinkBtn" style="display:flex;align-items:center;gap:8px;justify-content:center;">
+  <i data-lucide="copy"></i>
   Zkopírovat odkaz
 </button>
 
@@ -437,17 +441,30 @@ if (urlParams.get("new") === "1") {
       }
     };
 
-    if (copyLinkBtn) {
+if (copyLinkBtn) {
   copyLinkBtn.onclick = async () => {
     const feedbackLink = "https://lahvy.github.io/Feedback/?new=1";
+    const icon = copyLinkBtn.querySelector("i");
 
     try {
       await navigator.clipboard.writeText(feedbackLink);
 
+      // ✅ změna ikony: copy → check
+      if (icon) {
+        icon.setAttribute("data-lucide", "check");
+        lucide.createIcons();
+      }
+
       copyStatus.style.display = "block";
 
+      // po 2s vrátíme ikonu zpět
       setTimeout(() => {
         copyStatus.style.display = "none";
+
+        if (icon) {
+          icon.setAttribute("data-lucide", "copy");
+          lucide.createIcons();
+        }
       }, 2000);
 
     } catch (err) {
@@ -580,6 +597,9 @@ if (urlParams.get("new") === "1") {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     };
+
+  lucide.createIcons();
+  
   </script>
 
 </body>
